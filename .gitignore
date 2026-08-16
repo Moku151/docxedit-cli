@@ -1,0 +1,20 @@
+# Build and test output
+/docxedit
+/bin/
+/dist/
+*.exe
+*.test
+*.out
+coverage.*
+
+# Temporary files
+*.tmp
+.docxedit-*.tmp
+
+# Editors and IDEs
+.idea/
+.vscode/
+
+# Operating systems
+.DS_Store
+Thumbs.db
