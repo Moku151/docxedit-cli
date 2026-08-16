@@ -4,10 +4,48 @@
 writes only changed parts back. It does not unpack the complete document to
 disk and does not require Microsoft Word.
 
-The tool is designed to be portable Go code. The current version is tested on
-macOS only.
+The tool is designed to be portable Go code. CI tests it on macOS, Linux, and
+Windows and cross-compiles downloads for `amd64` and `arm64`.
 
 ## Install
+
+### Prebuilt continuous build
+
+The `continuous` release is a successfully verified development build from
+`main`; obsolete workflow runs never replace a newer result. It is not a stable
+version and makes no compatibility promise.
+
+| Platform | Architecture | Download |
+| --- | --- | --- |
+| macOS | Intel (`amd64`) | [tar.gz](https://github.com/Moku151/docxedit-cli/releases/download/continuous/docxedit_continuous_darwin_amd64.tar.gz) |
+| macOS | Apple Silicon (`arm64`) | [tar.gz](https://github.com/Moku151/docxedit-cli/releases/download/continuous/docxedit_continuous_darwin_arm64.tar.gz) |
+| Linux | `amd64` | [tar.gz](https://github.com/Moku151/docxedit-cli/releases/download/continuous/docxedit_continuous_linux_amd64.tar.gz) |
+| Linux | `arm64` | [tar.gz](https://github.com/Moku151/docxedit-cli/releases/download/continuous/docxedit_continuous_linux_arm64.tar.gz) |
+| Windows | `amd64` | [zip](https://github.com/Moku151/docxedit-cli/releases/download/continuous/docxedit_continuous_windows_amd64.zip) |
+| Windows | `arm64` | [zip](https://github.com/Moku151/docxedit-cli/releases/download/continuous/docxedit_continuous_windows_arm64.zip) |
+
+Each release also provides [SHA256SUMS](https://github.com/Moku151/docxedit-cli/releases/download/continuous/SHA256SUMS).
+Compare the checksum before extracting the archive:
+
+```sh
+# Linux
+sha256sum --check --ignore-missing SHA256SUMS
+
+# macOS (compare the result with the matching SHA256SUMS line)
+shasum -a 256 docxedit_continuous_darwin_arm64.tar.gz
+```
+
+On Windows, use `Get-FileHash ARCHIVE -Algorithm SHA256` in PowerShell. GitHub
+build provenance can be verified on every platform with the GitHub CLI:
+
+```sh
+gh attestation verify ARCHIVE -R Moku151/docxedit-cli
+```
+
+After extraction, `docxedit --version` prints the exact source commit embedded
+in the downloaded executable.
+
+### Build from source
 
 Go 1.26 or newer is required to build the current source tree.
 

@@ -55,11 +55,14 @@ The command syntax is:
 
 ```text
 docxedit [--editor COMMAND] FILE.docx
+docxedit --version
 ```
 
 Requirements:
 
-- Exactly one DOCX path MUST be accepted per invocation.
+- Exactly one DOCX path MUST be accepted per editing invocation.
+- `--version` MUST print the build identity and exit successfully without a
+  DOCX path, editor, or other side effect.
 - Internal package paths MUST NOT be accepted as positional arguments; part
   selection is always interactive.
 - The path MUST end in `.docx`, case-insensitively.
@@ -295,13 +298,21 @@ the original, closed, synchronized, and fully validated before replacement.
 - The product MUST have no persistent configuration file.
 - The intended personal installation mechanism is `go install
   ./cmd/docxedit`; local `go build` MUST also work.
-- Version 1 does not require release binaries, package-manager recipes, or an
-  automated publishing pipeline.
+- Every `main` commit MUST trigger the publishing workflow. A successful build
+  MUST update the rolling GitHub `continuous` release only if its commit is
+  still the branch head, with prebuilt executables for macOS, Linux, and
+  Windows on `amd64` and `arm64`.
+- Continuous-release executables MUST identify their exact source commit
+  through `docxedit --version`; local builds MUST identify themselves as
+  `devel`.
+- Package-manager recipes and automatic installation scripts are not required.
 
 ## 16. Testing requirements
 
-- Runtime tests are initially required on macOS only.
-- Linux and Windows portability SHOULD be preserved in code and compile checks.
+- The complete test suite and `go vet ./...` MUST pass in CI on macOS, Linux,
+  and Windows before build artifacts are produced.
+- Release compile checks MUST cover macOS, Linux, and Windows on both `amd64`
+  and `arm64`.
 - Tests MUST generate synthetic DOCX fixtures; personal documents MUST NOT be
   committed as fixtures.
 - Automated tests MUST cover valid packages, malformed XML, unsafe and
@@ -326,7 +337,12 @@ The baseline is accepted when all of the following are true:
 8. Invalid edited XML cannot overwrite the original.
 9. A concurrently modified source cannot be overwritten.
 10. Failure after editing reports retained working files.
-11. The complete test suite passes on macOS.
+11. The complete test suite and `go vet ./...` pass on macOS, Linux, and
+    Windows.
+12. Six release archives compile for macOS, Linux, and Windows on `amd64` and
+    `arm64`.
+13. A successful current `main` commit updates the attested rolling release
+    without allowing an older run to overwrite it.
 
 ## 18. Deferred possibilities
 
@@ -340,4 +356,4 @@ The following MAY be considered later but are not implied by this specification:
 - additional Office package types;
 - accessibility-specific or ANSI-free selector modes;
 - configurable resource limits;
-- packaged releases and multi-platform CI.
+- immutable, versioned releases and package-manager recipes.

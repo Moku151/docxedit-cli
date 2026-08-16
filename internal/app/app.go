@@ -20,18 +20,28 @@ import (
 
 var ErrCanceled = errors.New("canceled")
 
+// BuildVersion identifies the source used for this binary. Release builds set
+// it with -ldflags; local builds intentionally keep the devel value.
+var BuildVersion = "devel"
+
 // Run executes one interactive edit session.
 func Run(arguments []string, stdin *os.File, stdout, stderr io.Writer) error {
 	flags := flag.NewFlagSet("docxedit", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	editorOverride := flags.String("editor", "", "editor command to use instead of $EDITOR")
+	showVersion := flags.Bool("version", false, "print build version and exit")
 	flags.Usage = func() {
 		fmt.Fprintln(flags.Output(), "Usage: docxedit [--editor COMMAND] FILE.docx")
+		fmt.Fprintln(flags.Output(), "       docxedit --version")
 		fmt.Fprintln(flags.Output(), "Interactively select existing .xml and .rels parts, edit them, and safely update FILE.docx.")
 		flags.PrintDefaults()
 	}
 	if err := flags.Parse(arguments); err != nil {
 		return err
+	}
+	if *showVersion {
+		fmt.Fprintf(stdout, "docxedit %s\n", BuildVersion)
+		return nil
 	}
 	if flags.NArg() != 1 {
 		flags.Usage()

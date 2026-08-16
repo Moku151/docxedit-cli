@@ -1,0 +1,206 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Test
+        run: go test ./...
+      - name: Vet
+        run: go vet ./...
+
+  package:
+    name: Package all targets
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Build and package all targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+
+          build_and_package() {
+            task_goos="$1"
+            task_goarch="$2"
+            task_binary="$3"
+            task_archive="$4"
+            task_package_dir="package/${task_goos}-${task_goarch}"
+            mkdir -p "${task_package_dir}"
+
+            CGO_ENABLED=0 GOOS="${task_goos}" GOARCH="${task_goarch}" \
+              go build -trimpath \
+              -ldflags "-X docxedit/internal/app.BuildVersion=continuous+${GITHUB_SHA}" \
+              -o "${task_package_dir}/${task_binary}" ./cmd/docxedit
+
+            if [[ "${task_goos}" == "windows" ]]; then
+              (cd "${task_package_dir}" && zip -q "../../dist/${task_archive}" "${task_binary}")
+            else
+              (cd "${task_package_dir}" && tar -czf "../../dist/${task_archive}" "${task_binary}")
+            fi
+          }
+
+          build_and_package darwin amd64 docxedit docxedit_continuous_darwin_amd64.tar.gz
+          build_and_package darwin arm64 docxedit docxedit_continuous_darwin_arm64.tar.gz
+          build_and_package linux amd64 docxedit docxedit_continuous_linux_amd64.tar.gz
+          build_and_package linux arm64 docxedit docxedit_continuous_linux_arm64.tar.gz
+          build_and_package windows amd64 docxedit.exe docxedit_continuous_windows_amd64.zip
+          build_and_package windows arm64 docxedit.exe docxedit_continuous_windows_arm64.zip
+      - name: Upload macOS amd64 CI artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docxedit-darwin-amd64
+          path: dist/docxedit_continuous_darwin_amd64.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Upload macOS arm64 CI artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docxedit-darwin-arm64
+          path: dist/docxedit_continuous_darwin_arm64.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Upload Linux amd64 CI artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docxedit-linux-amd64
+          path: dist/docxedit_continuous_linux_amd64.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Upload Linux arm64 CI artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docxedit-linux-arm64
+          path: dist/docxedit_continuous_linux_arm64.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Upload Windows amd64 CI artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docxedit-windows-amd64
+          path: dist/docxedit_continuous_windows_amd64.zip
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Upload Windows arm64 CI artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docxedit-windows-arm64
+          path: dist/docxedit_continuous_windows_arm64.zip
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+  release:
+    name: Update continuous release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: package
+    runs-on: ubuntu-latest
+    concurrency:
+      group: continuous-release
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download packaged builds
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: docxedit-*
+          path: dist
+          merge-multiple: true
+      - name: Generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum docxedit_continuous_* | LC_ALL=C sort > SHA256SUMS)
+      - name: Check that this is still the current main commit
+        id: current
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          if [[ "${remote_sha}" == "${GITHUB_SHA}" ]]; then
+            echo "publish=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            echo "Skipping obsolete commit ${GITHUB_SHA}; main is ${remote_sha}."
+          fi
+      - name: Attest release files
+        if: steps.current.outputs.publish == 'true'
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+        with:
+          subject-path: |
+            dist/docxedit_continuous_*
+            dist/SHA256SUMS
+      - name: Move continuous tag
+        if: steps.current.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git tag --force continuous "${GITHUB_SHA}"
+          git push --force origin refs/tags/continuous
+      - name: Publish release assets
+        if: steps.current.outputs.publish == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          notes="Automated development build from commit ${GITHUB_SHA}.
+
+          This rolling release contains a successfully verified main commit and makes no stability or compatibility promise."
+          if gh release view continuous >/dev/null 2>&1; then
+            gh release edit continuous \
+              --title "Continuous Build" \
+              --notes "${notes}" \
+              --prerelease
+          else
+            gh release create continuous \
+              --title "Continuous Build" \
+              --notes "${notes}" \
+              --prerelease \
+              --verify-tag
+          fi
+          gh release upload continuous dist/docxedit_continuous_* --clobber
+          gh release upload continuous dist/SHA256SUMS --clobber
