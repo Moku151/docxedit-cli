@@ -265,7 +265,8 @@ the original, closed, synchronized, and fully validated before replacement.
 - Windows file-sharing rules and documented partial-failure states prevent a
   universal guarantee that the original remains unchanged if the replacement
   API itself fails.
-- Normal permission bits MUST be preserved.
+- POSIX permission bits MUST be preserved on operating systems that expose
+  them.
 - Ownership, ACLs, extended attributes, Finder metadata, and crash durability
   SHOULD be preserved best-effort where the operating system permits it.
 - The filesystem modification time is expected to change after a successful

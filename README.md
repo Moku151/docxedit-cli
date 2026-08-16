@@ -136,8 +136,9 @@ causes an abort.
 On macOS and Linux, a same-directory rename atomically makes the validated
 archive visible. Windows uses `ReplaceFileW`; Windows file-sharing rules and
 the operating system's documented partial-failure cases still apply. No backup
-is created. Permissions are preserved, while ownership, ACLs, extended
-attributes, and crash durability are preserved best-effort where supported.
+is created. POSIX permission bits are preserved where supported, while
+ownership, ACLs, extended attributes, and crash durability are preserved
+best-effort where supported.
 
 If validation fails, the editor can be reopened. On abort or another error,
 the absolute path of the retained working files is printed. There is no resume

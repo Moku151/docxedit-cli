@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestReplacePreservesModeAndReplacesContent(t *testing.T) {
+func TestReplaceReplacesContentAndPreservesModeWhereSupported(t *testing.T) {
 	directory := t.TempDir()
 	target := filepath.Join(directory, "document.docx")
 	temporary := filepath.Join(directory, "replacement.tmp")
@@ -32,12 +32,14 @@ func TestReplacePreservesModeAndReplacesContent(t *testing.T) {
 	if string(data) != "new" {
 		t.Fatalf("target content = %q, want new", data)
 	}
-	info, err := os.Stat(target)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := info.Mode().Perm(); got != 0o640 {
-		t.Fatalf("target mode = %o, want 640", got)
+	if runtime.GOOS != "windows" {
+		info, err := os.Stat(target)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := info.Mode().Perm(); got != 0o640 {
+			t.Fatalf("target mode = %o, want 640", got)
+		}
 	}
 }
 
