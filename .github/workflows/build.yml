@@ -80,7 +80,7 @@ jobs:
           build_and_package windows amd64 docxedit.exe docxedit_continuous_windows_amd64.zip
           build_and_package windows arm64 docxedit.exe docxedit_continuous_windows_arm64.zip
       - name: Upload macOS amd64 CI artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docxedit-darwin-amd64
           path: dist/docxedit_continuous_darwin_amd64.tar.gz
@@ -88,7 +88,7 @@ jobs:
           retention-days: 14
           compression-level: 0
       - name: Upload macOS arm64 CI artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docxedit-darwin-arm64
           path: dist/docxedit_continuous_darwin_arm64.tar.gz
@@ -96,7 +96,7 @@ jobs:
           retention-days: 14
           compression-level: 0
       - name: Upload Linux amd64 CI artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docxedit-linux-amd64
           path: dist/docxedit_continuous_linux_amd64.tar.gz
@@ -104,7 +104,7 @@ jobs:
           retention-days: 14
           compression-level: 0
       - name: Upload Linux arm64 CI artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docxedit-linux-arm64
           path: dist/docxedit_continuous_linux_arm64.tar.gz
@@ -112,7 +112,7 @@ jobs:
           retention-days: 14
           compression-level: 0
       - name: Upload Windows amd64 CI artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docxedit-windows-amd64
           path: dist/docxedit_continuous_windows_amd64.zip
@@ -120,7 +120,7 @@ jobs:
           retention-days: 14
           compression-level: 0
       - name: Upload Windows arm64 CI artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docxedit-windows-arm64
           path: dist/docxedit_continuous_windows_arm64.zip
